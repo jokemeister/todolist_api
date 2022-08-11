@@ -18,6 +18,7 @@ http DELETE localhost:3000/tasks/10
 http localhost:3000/dashboard
 http localhost:3000/collection/today
 http localhost:3000/lists/1/tasks
+http localhost:3000/lists/1/tasks?all=true
 
 ---- SQL COMMANDS ----
 

@@ -1,12 +1,10 @@
 const db = require('../db');
+const knex = require('../db')
 
 module.exports = {
   async findAll() {
-    let tasks = await db.query(`
-    SELECT * 
-    FROM tasks
-    `);
-    return tasks.rows;
+    let tasks = await knex('tasks').select('*');
+    return tasks;
   },
 
   async findByListId(listId, all) {
@@ -25,38 +23,51 @@ module.exports = {
   },
 
   async findDashboard() {
-    let allTasks = await db.query(`
-      SELECT COUNT(*) 
-      FROM tasks 
-      WHERE due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'
-    `);
-    let groupedTasks = await db.query(`
-    SELECT name, count
-    FROM (
-      SELECT list_id, COUNT(*)
-      FROM (    
-        SELECT id, list_id, done
-        FROM tasks 
-        WHERE due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'
-      ) as todayTable
-      WHERE done=false
-      GROUP BY list_id
-    ) as unDoneTodayTable
-    RIGHT JOIN lists
-    ON unDoneTodayTable.list_id = lists.id
-    `)
-    return allTasks.rows.concat(groupedTasks.rows);
+    let allTasks = await knex('tasks')
+    .count('*')
+    .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
+    // let groupedTasks = await db.query(`
+    // SELECT name, count
+    // FROM (
+    //   SELECT list_id, COUNT(*)
+    //   FROM (    
+    //     SELECT id, list_id, done
+    //     FROM tasks 
+    //     WHERE due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'
+    //   ) as todayTable
+    //   WHERE done=false
+    //   GROUP BY list_id
+    // ) as unDoneTodayTable
+    // RIGHT JOIN lists
+    // ON unDoneTodayTable.list_id = lists.id
+    // `)
+    // return allTasks.rows.concat(groupedTasks.rows);
+    let groupedTasks = await knex('tasks')
+    .select('name', 'count')
+    .from(function() {
+      this.select('id', 'list_id', 'done')
+      .from('tasks')
+      .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
+      .as('todayTable')
+      .where('done', false)
+      .groupBy('list_id')
+    })
+    .as('unDoneTodayTable')
+    .rightOuterJoin('lists', function() {
+      this.on('tasks.list_id', '=', 'lists.id')
+    })
+
+    return groupedTasks;
   },
 
   async findToday() {
-    let todayTasks = await db.query(`
-    SELECT *
-    FROM tasks 
-    RIGHT JOIN lists
-    ON tasks.list_id = lists.id
-    WHERE due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'
-    `)
-    return todayTasks.rows
+    let todayTasks = await knex('tasks')
+    .select('*')
+    .rightOuterJoin('lists', function() {
+      this.on('tasks.list_id', '=', 'lists.id')
+    })
+    .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
+    return todayTasks
   },
 
   async create(task) {
