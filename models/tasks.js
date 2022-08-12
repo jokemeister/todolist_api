@@ -26,31 +26,35 @@ module.exports = {
 
   async findDashboard() {
     let allTasks = await db.query(`
-      SELECT COUNT(*) 
+      SELECT COUNT(*) AS today
       FROM tasks 
       WHERE due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'
     `);
     let groupedTasks = await db.query(`
-    SELECT name, count
+    SELECT *
     FROM (
-      SELECT list_id, COUNT(*)
-      FROM (    
-        SELECT id, list_id, done
-        FROM tasks 
-        WHERE due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'
-      ) as todayTable
-      WHERE done=false
-      GROUP BY list_id
-    ) as unDoneTodayTable
-    RIGHT JOIN lists
-    ON unDoneTodayTable.list_id = lists.id
+      SELECT list_id as id, name, undone
+      FROM (
+        SELECT list_id, COUNT(*) as undone
+        FROM (    
+          SELECT id, list_id, done
+          FROM tasks 
+          WHERE due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'
+        ) as todayTable
+        WHERE done=false
+        GROUP BY list_id
+      ) as unDoneTodayTable
+      RIGHT JOIN lists
+      ON unDoneTodayTable.list_id = lists.id
+    ) as lists
     `)
-    return allTasks.rows.concat(groupedTasks.rows);
+    await Promise.all([allTasks.rows[0], allTasks.rows[0]['lists']=groupedTasks.rows]);
+    return allTasks.rows[0];
   },
 
   async findToday() {
     let todayTasks = await db.query(`
-    SELECT *
+    SELECT tasks.id as task_id, tasks.name as task_name, description, done, due_date, lists.name as list_name, lists.id as list_id
     FROM tasks 
     RIGHT JOIN lists
     ON tasks.list_id = lists.id
@@ -69,7 +73,7 @@ module.exports = {
     return newTask.rows;
   },
 
-  async exchange(taskId, task) {
+  async replace(taskId, task) {
     let newTask = await db.query(`
     UPDATE tasks 
     SET name = $2, description = $3, done = $4, due_date = $5, list_id = $6 
@@ -82,15 +86,7 @@ module.exports = {
   async update(taskId, newValues) {
     const task = (await db.query(`SELECT * FROM tasks WHERE id=$1`, [taskId])).rows[0];
     Object.assign(task, newValues);
-    console.log(task);
-    const updatedTask = await db.query(`
-    UPDATE tasks 
-    SET name = $2, description = $3, done = $4, due_date = $5, list_id = $6 
-    WHERE id=$1 
-    RETURNING *
-    `, 
-    [taskId, task.name, task.description, task.done, task.due_date, task.list_id]);
-    return updatedTask.rows;
+    return this.replace(taskId, task)
   },
 
   async delete(taskId) {
