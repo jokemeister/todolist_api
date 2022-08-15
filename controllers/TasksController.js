@@ -1,16 +1,14 @@
-const Tasks = require('../models/tasks');
+const Tasks = require('../models/Tasks');
 
 class TasksController {
     findAll() {
-        console.log('Controller');
         return Tasks.findAll();
     }
     findByListId(listId, all) {
-        return Tasks.findByListId(listId, all);
+        return Tasks.findByListId(parseInt(listId), all);
     }
     findOneById(id) {
-        console.log('id in controller', id);
-        return Tasks.findOneById(id);
+        return Tasks.findOneById(parseInt(id));
     }
     findDashboard() {
         return Tasks.findDashboard();
@@ -21,11 +19,11 @@ class TasksController {
     createNew(task) {
         return Tasks.create(task);
     }
-    exchangeById(id, task) {
-        return Tasks.exchange(parseInt(id), task)
+    replaceById(id, task) {
+        return Tasks.replace(parseInt(id), task)
     }
     updateById(id, task) {
-        return Tasks.update(parseInt(id), task, { new: true });
+        return Tasks.update(parseInt(id), task);
     }
     deleteById(id) {
         return Tasks.delete(parseInt(id));

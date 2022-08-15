@@ -1,77 +1,60 @@
-const db = require('../db');
-const knex = require('../db')
+const knex = require('../db_knex');
+const dbSql = require('../db_sql');
 
 module.exports = {
   async findAll() {
-    let tasks = await knex('tasks').select('*');
-    return tasks;
+    let tasks = await dbSql.query(`
+    SELECT * 
+    FROM tasks
+    `);
+    return tasks.rows;
   },
 
   async findByListId(listId, all) {
-    let tasks = await db.query(`
-    SELECT name, description, done, due_date 
-    FROM tasks
-    WHERE list_id = $1 AND (done=false OR done=$2)
-    `, [listId, all])
-    return tasks.rows;
+    let tasks = await knex('tasks')
+    .select('name', 'description', 'done', 'due_date')
+    .where('list_id', listId)
+    .andWhere('done', all)
+    return tasks;
   },
 
 
   async findOneById(taskId) {
-    let task = await db.query(`SELECT * FROM tasks WHERE id=$1`, [taskId]);
+    let task = await dbSql.query(`SELECT * FROM tasks WHERE id=$1`, [taskId]);
     return task.rows;
   },
 
   async findDashboard() {
     let allTasks = await knex('tasks')
-    .count('*')
+    .count('*', {as: 'today'})
     .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
-    // let groupedTasks = await db.query(`
-    // SELECT name, count
-    // FROM (
-    //   SELECT list_id, COUNT(*)
-    //   FROM (    
-    //     SELECT id, list_id, done
-    //     FROM tasks 
-    //     WHERE due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'
-    //   ) as todayTable
-    //   WHERE done=false
-    //   GROUP BY list_id
-    // ) as unDoneTodayTable
-    // RIGHT JOIN lists
-    // ON unDoneTodayTable.list_id = lists.id
-    // `)
-    // return allTasks.rows.concat(groupedTasks.rows);
-    let groupedTasks = await knex('tasks')
-    .select('name', 'count')
-    .from(function() {
-      this.select('id', 'list_id', 'done')
-      .from('tasks')
-      .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
-      .as('todayTable')
-      .where('done', false)
-      .groupBy('list_id')
-    })
-    .as('unDoneTodayTable')
-    .rightOuterJoin('lists', function() {
-      this.on('tasks.list_id', '=', 'lists.id')
-    })
 
-    return groupedTasks;
+    let groupedTasks = await knex('tasks')
+    .groupBy('lists.name')
+    .select(knex.raw('list_id as id, lists.name, COUNT(*) as undone'))
+    .groupBy('list_id')
+    .rightOuterJoin('lists', function() {
+      this.on('lists.id', '=', 'tasks.list_id')
+    })
+    .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
+
+    await Promise.all([allTasks[0], allTasks[0]['lists']=groupedTasks])
+    return allTasks[0]
+
   },
 
   async findToday() {
     let todayTasks = await knex('tasks')
-    .select('*')
+    .select(knex.raw('tasks.id as id, tasks.name as name, description, done, due_date, lists.name as list_name, lists.id as list_id'))
     .rightOuterJoin('lists', function() {
-      this.on('tasks.list_id', '=', 'lists.id')
+      this.on('lists.id', '=', 'tasks.list_id')
     })
-    .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
+
     return todayTasks
   },
 
   async create(task) {
-    let newTask = await db.query(`
+    let newTask = await dbSql.query(`
       INSERT INTO tasks (name, description, done, due_date, list_id) 
       VALUES ($1, $2, $3, $4, $5) 
       RETURNING *
@@ -80,8 +63,8 @@ module.exports = {
     return newTask.rows;
   },
 
-  async exchange(taskId, task) {
-    let newTask = await db.query(`
+  async replace(taskId, task) {
+    let newTask = await dbSql.query(`
     UPDATE tasks 
     SET name = $2, description = $3, done = $4, due_date = $5, list_id = $6 
     WHERE id=$1 RETURNING *
@@ -91,21 +74,13 @@ module.exports = {
   },
 
   async update(taskId, newValues) {
-    const task = (await db.query(`SELECT * FROM tasks WHERE id=$1`, [taskId])).rows[0];
+    const task = (await dbSql.query(`SELECT * FROM tasks WHERE id=$1`, [taskId])).rows[0];
     Object.assign(task, newValues);
-    console.log(task);
-    const updatedTask = await db.query(`
-    UPDATE tasks 
-    SET name = $2, description = $3, done = $4, due_date = $5, list_id = $6 
-    WHERE id=$1 
-    RETURNING *
-    `, 
-    [taskId, task.name, task.description, task.done, task.due_date, task.list_id]);
-    return updatedTask.rows;
+    return this.replace(taskId, task)
   },
 
   async delete(taskId) {
-    const task = await db.query(`DELETE FROM tasks WHERE id=$1 RETURNING *`, [taskId]);
+    const task = await dbSql.query(`DELETE FROM tasks WHERE id=$1 RETURNING *`, [taskId]);
     return task.rows;
   }
 }
