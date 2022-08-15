@@ -50,7 +50,7 @@ function RestfulRoutes(router, controller, model) {
         })
 
         router.put('/:id', middleware, async function (req, res) {
-            let oneModel = await controller.replaceById(req.params.id, req.body);
+            let oneModel = await controller.exchangeById(req.params.id, req.body);
             if (!oneModel) res.status(404).json({ error: `${model} was not found` })
             else res.json(oneModel)
         })
