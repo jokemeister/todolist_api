@@ -40,7 +40,7 @@ module.exports = {
     .orderBy('id')
  
 
-    await Promise.all([allTasks[0], allTasks[0]['lists']=groupedTasks])
+    allTasks[0], allTasks[0]['lists']=groupedTasks;
     return allTasks[0]
 
   },
