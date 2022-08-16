@@ -1,5 +1,28 @@
-const knex = require('../db_knex');
 const dbSql = require('../db_sql');
+const sequelize = require('../db_sequelize')
+const { DataTypes, Op } = require('sequelize');
+
+const Task = sequelize.define('task', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  name: DataTypes.STRING,
+  description: DataTypes.STRING,
+  done: DataTypes.BOOLEAN,
+  due_date: DataTypes.DATE,
+  list_id: DataTypes.INTEGER,
+}, {
+  timestamps: false
+});
+
+Task.associate = (models) => {
+  Task.belongsTo(models.list, {
+    foreignKey: 'list_id'
+  });
+}
+
 
 module.exports = {
   async findAll() {
@@ -25,22 +48,33 @@ module.exports = {
   },
 
   async findDashboard() {
-    let allTasks = await knex('tasks')
-    .count('*', {as: 'today'})
-    .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
+    let allTasks = Task.count(
+      {
+        where: {
+          due_date:{
+            [Op.between]: [new Date(), new Date()]
+          }
+        },
+      }
+    );
 
-    let groupedTasks = await knex('tasks')
-    .groupBy('lists.name')
-    .select(knex.raw('list_id as id, lists.name, COUNT(*) as undone'))
-    .groupBy('list_id')
-    .rightOuterJoin('lists', function() {
-      this.on('lists.id', '=', 'tasks.list_id')
-    })
-    .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
+    // let groupedTasks = Task.count(
+    //   {
+    //     where: {
+    //       done: false
+    //     },
+    //     group: ['list_id'],
 
-    await Promise.all([allTasks[0], allTasks[0]['lists']=groupedTasks])
-    return allTasks[0]
+    //   }
+    // );
 
+    let groupedTasks = Task.findAll(
+      {
+        include: 'list'
+      }
+    );
+
+    return groupedTasks;
   },
 
   async findToday() {
@@ -82,5 +116,5 @@ module.exports = {
   async delete(taskId) {
     const task = await dbSql.query(`DELETE FROM tasks WHERE id=$1 RETURNING *`, [taskId]);
     return task.rows;
-  }
+  },
 }

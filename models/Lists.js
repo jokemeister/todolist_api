@@ -1,4 +1,25 @@
 const dbSql = require('../db_sql');
+const sequelize = require('../db_sequelize')
+const { DataTypes } = require('sequelize');
+
+const List = sequelize.define('list', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  name: DataTypes.STRING,
+
+}, {
+  timestamps: false
+});
+
+List.associate = (models) => {
+  List.hasMany(models.task, {
+    foreignKey: 'list_id'
+  });
+}
+
 
 module.exports = {
   async findAll() {
@@ -37,5 +58,5 @@ module.exports = {
   async delete(listId) {
     const list = await dbSql.query(`DELETE FROM lists WHERE id=$1 RETURNING *`, [listId]);
     return list.rows;
-  }
+  },
 }

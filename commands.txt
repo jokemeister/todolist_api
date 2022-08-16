@@ -41,10 +41,10 @@ VALUES
 ('Give a birth', 'Earn a lot of money first', false, '2030-08-01', 1),
 ('Make a millione dollars', 'Earn great skills first', false, '2032-01-01', 1),
 ('Go for a lunch', 'Eat more to have energy for doing tasks', true, '2032-01-01', 2),
-('Create dashboard', 'In other case you will not get the job', false, '2022-08-15', 2),
-('Create collections', 'In other case you will not get the job again', false, '2022-08-15', 2),
-('Do agregation homework', 'In other case you will not get the job again and again', false, '2022-08-15', 2),
-('Make up bed', 'In other case you will be looking for new bed', true, '2022-08-15', 3),
-('Do laundry', 'In other case you will be looking for new home', false, '2022-08-15', 3),
-('Wash the dishes', 'In other case you will be looking for new home again', false, '2022-08-15', 3),
-('Feed the dogs', 'In other case you will be looking for new dogs', false, '2022-08-15', 3);
+('Create dashboard', 'In other case you will not get the job', false, '2022-08-16', 2),
+('Create collections', 'In other case you will not get the job again', false, '2022-08-16', 2),
+('Do agregation homework', 'In other case you will not get the job again and again', false, '2022-08-16', 2),
+('Make up bed', 'In other case you will be looking for new bed', true, '2022-08-16', 3),
+('Do laundry', 'In other case you will be looking for new home', false, '2022-08-16', 3),
+('Wash the dishes', 'In other case you will be looking for new home again', false, '2022-08-16', 3),
+('Feed the dogs', 'In other case you will be looking for new dogs', false, '2022-08-16', 3);
