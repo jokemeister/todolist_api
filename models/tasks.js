@@ -26,12 +26,12 @@ module.exports = {
 
   async findDashboard() {
     let allTasks = await db.query(`
-      SELECT COUNT(*) 
+      SELECT COUNT(*) as today 
       FROM tasks 
       WHERE due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'
     `);
     let groupedTasks = await db.query(`
-    SELECT name, count
+    SELECT list_id as id, name, count
     FROM (
       SELECT list_id, COUNT(*)
       FROM (    
@@ -45,7 +45,8 @@ module.exports = {
     RIGHT JOIN lists
     ON unDoneTodayTable.list_id = lists.id
     `)
-    return allTasks.rows.concat(groupedTasks.rows);
+    allTasks.rows[0]['lists'] = groupedTasks.rows;
+    return allTasks.rows[0]
   },
 
   async findToday() {
