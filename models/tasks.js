@@ -37,6 +37,8 @@ module.exports = {
       this.on('lists.id', '=', 'tasks.list_id')
     })
     .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
+    .orderBy('id')
+ 
 
     await Promise.all([allTasks[0], allTasks[0]['lists']=groupedTasks])
     return allTasks[0]
