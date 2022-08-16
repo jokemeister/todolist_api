@@ -30,14 +30,28 @@ module.exports = {
     .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
 
     let groupedTasks = await knex('tasks')
-    .groupBy('lists.name')
-    .select(knex.raw('list_id as id, lists.name, COUNT(*) as undone'))
-    .groupBy('list_id')
-    .rightOuterJoin('lists', function() {
-      this.on('lists.id', '=', 'tasks.list_id')
+    // .select('list_id as id', 'lists.name', 'count as undone')
+    .select('*')
+    .from(function() {
+      this.select(knex.raw('count(id) as undone, list_id'))
+      .from('tasks')
+      .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'"))
+      .groupBy('list_id')
+      .orderBy('list_id')
+      .as('todayList')
     })
-    .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
-    .orderBy('id')
+    // .rightOuterJoin('lists', function() {
+    //   this.on('lists.id', '=', 'tasks.list_id')
+    // })
+
+    // .groupBy('lists.name')
+    // .select(knex.raw('list_id as id, lists.name, COUNT(*) as undone'))
+    // .groupBy('list_id')
+    // .rightOuterJoin('lists', function() {
+    //   this.on('lists.id', '=', 'tasks.list_id')
+    // })
+    // .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
+    // .orderBy('id')
  
 
     allTasks[0], allTasks[0]['lists']=groupedTasks;
