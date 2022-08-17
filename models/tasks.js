@@ -18,7 +18,6 @@ module.exports = {
     return tasks;
   },
 
-
   async findOneById(taskId) {
     let task = await dbSql.query(`SELECT * FROM tasks WHERE id=$1`, [taskId]);
     return task.rows;
@@ -31,15 +30,15 @@ module.exports = {
 
     let groupedTasks = await knex('tasks')
     // .select('list_id as id', 'lists.name', 'count as undone')
-    .select('*')
-    .from(function() {
-      this.select(knex.raw('count(id) as undone, list_id'))
-      .from('tasks')
-      .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'"))
-      .groupBy('list_id')
-      .orderBy('list_id')
-      .as('todayList')
-    })
+    // .select('*')
+    // .from(function() {
+    //   this.select(knex.raw('count(id) as undone, list_id'))
+    //   .from('tasks')
+    //   .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'"))
+    //   .groupBy('list_id')
+    //   .orderBy('list_id')
+    //   .as('todayList')
+    // })
     // .rightOuterJoin('lists', function() {
     //   this.on('lists.id', '=', 'tasks.list_id')
     // })
