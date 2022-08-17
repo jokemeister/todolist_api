@@ -51,12 +51,11 @@ module.exports = {
   },
 
   async findToday() {
-    console.log('shit', sequelize.models.lists);
     let todayTasks = await Task.findAll({
       attributes: ['id', 'name', 'description', 'done', 'due_date'],
       where: {
         due_date: {
-          [Op.eq]: sequelize.literal('CURRENT_DATE')
+          [Op.between]: [sequelize.literal('CURRENT_DATE'), sequelize.literal("CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")]
         }
       },
       include: sequelize.models.lists
