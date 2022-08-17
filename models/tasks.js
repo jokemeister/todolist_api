@@ -34,26 +34,25 @@ module.exports = {
   },
 
   async findDashboard() {
-    let allTasks = await knex('tasks')
-    .count({today: 'done'})
-    .whereRaw("due_date = CURRENT_DATE")
-    // .orderBy('list_id')
+    let todayTasksCount = await knex('tasks')
+      .count({today: 'done'})
+      .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
 
     let groupedTasks = await knex
-    .select('l.id as id', 'l.name')
-    .count({undone: 'done'})
-    .from(function() {
-      this.select('*')
-      .from('tasks')
-      .where('done', '=', false)
-      .as('t')
-    })
-    .rightJoin('lists as l', 't.list_id', 'l.id' )
-    .groupBy('l.id', 'l.name')
-    .orderBy('l.id')
+      .select('l.id as id', 'l.name')
+      .count({undone: 'done'})
+      .from(function() {
+        this.select('*')
+        .from('tasks')
+        .where('done', '=', false)
+        .as('t')
+      })
+      .rightJoin('lists as l', 't.list_id', 'l.id' )
+      .groupBy('l.id', 'l.name')
+      .orderBy('l.id')
 
     const result = Object.assign(
-      allTasks[0], {'lists': groupedTasks}
+      todayTasksCount[0], {'lists': groupedTasks}
     );
 
     return result;
@@ -61,11 +60,11 @@ module.exports = {
 
   async findToday() {
     let todayTasks = await knex('tasks')
-    .select('tasks.id as id', 'tasks.name as name', 'description', 'done', 'due_date', 'lists.name as list_name', 'lists.id as list_id')
-    .whereRaw("due_date = CURRENT_DATE")
-    .rightOuterJoin('lists', function() {
-      this.on('lists.id', '=', 'tasks.list_id')
-    })
+      .select('tasks.id as id', 'tasks.name as name', 'description', 'done', 'due_date', 'lists.name as list_name', 'lists.id as list_id')
+      .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
+      .rightOuterJoin('lists', function() {
+        this.on('lists.id', '=', 'tasks.list_id')
+      })
 
     return todayTasks
   },
@@ -82,10 +81,10 @@ module.exports = {
 
   async replace(taskId, task) {
     let newTask = await dbSql.query(`
-    UPDATE tasks 
-    SET name = $2, description = $3, done = $4, due_date = $5, list_id = $6 
-    WHERE id=$1 RETURNING *
-    `, 
+      UPDATE tasks 
+      SET name = $2, description = $3, done = $4, due_date = $5, list_id = $6 
+      WHERE id=$1 RETURNING *
+      `, 
     [taskId, task.name, task.description, task.done, task.due_date, task.list_id]);
     return newTask.rows;
   },
