@@ -4,8 +4,8 @@ const dbSql = require('../db_sql');
 module.exports = {
   async findAll() {
     let tasks = await dbSql.query(`
-    SELECT * 
-    FROM tasks
+      SELECT * 
+      FROM tasks
     `);
     return tasks.rows;
   },
