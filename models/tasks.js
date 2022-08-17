@@ -25,35 +25,34 @@ module.exports = {
   },
 
   async findDashboard() {
-    let allTasks = await db.query(`
+    let todayTasks = await db.query(`
       SELECT COUNT(*) as today 
       FROM tasks 
-      WHERE due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'
+      WHERE due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59' AND done=false
     `);
+
     let groupedTasks = await db.query(`
-    SELECT list_id as id, name, count
-    FROM (
-      SELECT list_id, COUNT(*)
-      FROM (    
-        SELECT id, list_id, done
-        FROM tasks 
-        WHERE due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'
-      ) as todayTable
-      WHERE done=false
-      GROUP BY list_id
-    ) as unDoneTodayTable
-    RIGHT JOIN lists
-    ON unDoneTodayTable.list_id = lists.id
+      SELECT l.id as id, l.name, COUNT(t.id) as undone
+      FROM (
+        SELECT *
+        FROM tasks
+        WHERE done=false
+      ) as t
+      RIGHT JOIN lists as l
+      ON t.list_id=l.id
+      GROUP BY l.id, l.name
+      ORDER BY l.id
     `)
-    allTasks.rows[0]['lists'] = groupedTasks.rows;
-    return allTasks.rows[0]
+
+    const result = Object.assign(todayTasks.rows[0], {'lists': groupedTasks.rows});
+    return result;
   },
 
   async findToday() {
     let todayTasks = await db.query(`
     SELECT *
     FROM tasks 
-    RIGHT JOIN lists
+    LEFT JOIN lists
     ON tasks.list_id = lists.id
     WHERE due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'
     `)
