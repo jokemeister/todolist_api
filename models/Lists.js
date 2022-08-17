@@ -1,11 +1,10 @@
 const dbSql = require('../db_sql');
 
-
 module.exports = {
   async findAll() {
     let lists = await dbSql.query(`
-    SELECT * 
-    FROM lists
+      SELECT * 
+      FROM lists
     `);
     return lists.rows;
   },
@@ -27,9 +26,9 @@ module.exports = {
 
   async update(listId, list) {
     let newList = await dbSql.query(`
-    UPDATE lists 
-    SET name = $2
-    WHERE id=$1 RETURNING *
+      UPDATE lists 
+      SET name = $2
+      WHERE id=$1 RETURNING *
     `, 
     [listId, list.name]);
     return newList.rows;

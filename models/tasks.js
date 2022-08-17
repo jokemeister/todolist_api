@@ -3,12 +3,11 @@ const sequelize = require('../db_sequelize')
 const { Op } = require('sequelize');
 const { Task } = require('.');
 
-
 module.exports = {
   async findAll() {
     let tasks = await dbSql.query(`
-    SELECT * 
-    FROM tasks
+      SELECT * 
+      FROM tasks
     `);
     return tasks.rows;
   },
@@ -18,7 +17,7 @@ module.exports = {
       SELECT name, description, done, due_date 
       FROM tasks
       WHERE list_id = $1 AND (done=false OR done=$2)
-    `, [listId, all])
+    `, [listId, all]);
     return tasks.rows;
   },
 
@@ -63,7 +62,7 @@ module.exports = {
       include: sequelize.models.lists
     });
 
-    return todayTasks
+    return todayTasks;
   },
 
   async create(task) {
@@ -90,7 +89,7 @@ module.exports = {
       where: {
         id: taskId
       }
-    })
+    });
 
     return await Task.findByPk(taskId);
   },
