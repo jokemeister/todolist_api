@@ -11,10 +11,20 @@ module.exports = {
   },
 
   async findByListId(listId, all) {
-    let tasks = await knex('tasks')
-    .select('name', 'description', 'done', 'due_date')
-    .where('list_id', listId)
-    .andWhere('done', all)
+    let tasks;
+    
+    if (all) {
+      tasks = await knex('tasks')
+      .select('name', 'description', 'done', 'due_date')
+      .where('list_id', listId)
+    }
+    else {
+      tasks = await knex('tasks')
+      .select('name', 'description', 'done', 'due_date')
+      .where('list_id', listId)
+      .andWhere('done', false)
+    }
+
     return tasks;
   },
 
@@ -25,42 +35,34 @@ module.exports = {
 
   async findDashboard() {
     let allTasks = await knex('tasks')
-    .count('*', {as: 'today'})
-    .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
+    .count({today: 'done'})
+    .whereRaw("due_date = CURRENT_DATE")
+    // .orderBy('list_id')
 
-    let groupedTasks = await knex('tasks')
-    // .select('list_id as id', 'lists.name', 'count as undone')
-    // .select('*')
-    // .from(function() {
-    //   this.select(knex.raw('count(id) as undone, list_id'))
-    //   .from('tasks')
-    //   .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'"))
-    //   .groupBy('list_id')
-    //   .orderBy('list_id')
-    //   .as('todayList')
-    // })
-    // .rightOuterJoin('lists', function() {
-    //   this.on('lists.id', '=', 'tasks.list_id')
-    // })
+    let groupedTasks = await knex
+    .select('l.id as id', 'l.name')
+    .count({undone: 'done'})
+    .from(function() {
+      this.select('*')
+      .from('tasks')
+      .where('done', '=', false)
+      .as('t')
+    })
+    .rightJoin('lists as l', 't.list_id', 'l.id' )
+    .groupBy('l.id', 'l.name')
+    .orderBy('l.id')
 
-    // .groupBy('lists.name')
-    // .select(knex.raw('list_id as id, lists.name, COUNT(*) as undone'))
-    // .groupBy('list_id')
-    // .rightOuterJoin('lists', function() {
-    //   this.on('lists.id', '=', 'tasks.list_id')
-    // })
-    // .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
-    // .orderBy('id')
- 
+    const result = Object.assign(
+      allTasks[0], {'lists': groupedTasks}
+    );
 
-    allTasks[0], allTasks[0]['lists']=groupedTasks;
-    return allTasks[0]
-
+    return result;
   },
 
   async findToday() {
     let todayTasks = await knex('tasks')
-    .select(knex.raw('tasks.id as id, tasks.name as name, description, done, due_date, lists.name as list_name, lists.id as list_id'))
+    .select('tasks.id as id', 'tasks.name as name', 'description', 'done', 'due_date', 'lists.name as list_name', 'lists.id as list_id')
+    .whereRaw("due_date = CURRENT_DATE")
     .rightOuterJoin('lists', function() {
       this.on('lists.id', '=', 'tasks.list_id')
     })
