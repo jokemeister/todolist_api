@@ -3,8 +3,8 @@ const db = require('../db');
 module.exports = {
   async findAll() {
     let lists = await db.query(`
-    SELECT * 
-    FROM lists
+      SELECT * 
+      FROM lists
     `);
     return lists.rows;
   },
@@ -26,9 +26,9 @@ module.exports = {
 
   async update(listId, list) {
     let newList = await db.query(`
-    UPDATE lists 
-    SET name = $2
-    WHERE id=$1 RETURNING *
+      UPDATE lists 
+      SET name = $2
+      WHERE id=$1 RETURNING *
     `, 
     [listId, list.name]);
     return newList.rows;
