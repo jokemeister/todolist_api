@@ -27,24 +27,25 @@ create table lists(id serial PRIMARY KEY, name varchar);
 
 INSERT INTO lists(name)
 VALUES
+('unGrouped_tasks'),
 ('life_tasks'),
 ('incamp_tasks'),
 ('home_tasks');
 
 --- TASKS ---
-create table tasks(id serial PRIMARY KEY, name varchar, description varchar, done bool, due_date date, list_id int, FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE);
+create table tasks(id serial PRIMARY KEY, name varchar, description varchar, done bool, due_date date, list_id int REFERENCES lists(id) ON DELETE CASCADE);
 
 INSERT INTO tasks(name, description, done, due_date, list_id)
 VALUES
-('Graduate from school', 'Stop wasting time on gaining knowledge you will not use', true, '2020-08-01', 1),
-('Plant the tree', 'Buy the house first and then plant', false, '2032-08-01', 1),
-('Give a birth', 'Earn a lot of money first', false, '2030-08-01', 1),
-('Make a millione dollars', 'Earn great skills first', false, '2032-01-01', 1),
-('Go for a lunch', 'Eat more to have energy for doing tasks', true, '2032-01-01', 2),
-('Create dashboard', 'In other case you will not get the job', false, '2022-08-16', 2),
-('Create collections', 'In other case you will not get the job again', false, '2022-08-16', 2),
-('Do agregation homework', 'In other case you will not get the job again and again', false, '2022-08-16', 2),
-('Make up bed', 'In other case you will be looking for new bed', true, '2022-08-16', 3),
-('Do laundry', 'In other case you will be looking for new home', false, '2022-08-16', 3),
-('Wash the dishes', 'In other case you will be looking for new home again', false, '2022-08-16', 3),
-('Feed the dogs', 'In other case you will be looking for new dogs', false, '2022-08-16', 3);
+('Graduate from school', 'Stop wasting time on gaining knowledge you will not use', true, '2020-08-01', 2),
+('Plant the tree', 'Buy the house first and then plant', false, '2032-08-01', 2),
+('Give a birth', 'Earn a lot of money first', false, '2030-08-01', 2),
+('Make a millione dollars', 'Earn great skills first', false, '2032-01-01', 2),
+('Go for a lunch', 'Eat more to have energy for doing tasks', true, '2032-01-01', 3),
+('Create dashboard', 'In other case you will not get the job', false, CURRENT_DATE, 3),
+('Create collections', 'In other case you will not get the job again', false, CURRENT_DATE, 3),
+('Do agregation homework', 'In other case you will not get the job again and again', false, CURRENT_DATE, 3),
+('Make up bed', 'In other case you will be looking for new bed', true, CURRENT_DATE, 4),
+('Do laundry', 'In other case you will be looking for new home', false, CURRENT_DATE, 4),
+('Wash the dishes', 'In other case you will be looking for new home again', false, CURRENT_DATE, 4),
+('Feed the dogs', 'In other case you will be looking for new dogs', false, CURRENT_DATE, 4);

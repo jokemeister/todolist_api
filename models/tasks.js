@@ -1,27 +1,7 @@
 const dbSql = require('../db_sql');
 const sequelize = require('../db_sequelize')
-const { DataTypes, Op } = require('sequelize');
-
-const Task = sequelize.define('task', {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true
-  },
-  name: DataTypes.STRING,
-  description: DataTypes.STRING,
-  done: DataTypes.BOOLEAN,
-  due_date: DataTypes.DATE,
-  list_id: DataTypes.INTEGER,
-}, {
-  timestamps: false
-});
-
-Task.associate = (models) => {
-  Task.belongsTo(models.list, {
-    foreignKey: 'list_id'
-  });
-}
+const { Op } = require('sequelize');
+const { Task } = require('.');
 
 
 module.exports = {
@@ -34,13 +14,13 @@ module.exports = {
   },
 
   async findByListId(listId, all) {
-    let tasks = await knex('tasks')
-    .select('name', 'description', 'done', 'due_date')
-    .where('list_id', listId)
-    .andWhere('done', all)
-    return tasks;
+    let tasks = await dbSql.query(`
+      SELECT name, description, done, due_date 
+      FROM tasks
+      WHERE list_id = $1 AND (done=false OR done=$2)
+    `, [listId, all])
+    return tasks.rows;
   },
-
 
   async findOneById(taskId) {
     let task = await dbSql.query(`SELECT * FROM tasks WHERE id=$1`, [taskId]);
@@ -48,53 +28,49 @@ module.exports = {
   },
 
   async findDashboard() {
-    let allTasks = Task.count(
-      {
-        where: {
-          due_date:{
-            [Op.between]: [new Date(), new Date()]
-          }
-        },
-      }
-    );
+    let todayTasks = await dbSql.query(`
+      SELECT COUNT(*) as today
+      FROM tasks
+      WHERE due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'
+    `);
 
-    // let groupedTasks = Task.count(
-    //   {
-    //     where: {
-    //       done: false
-    //     },
-    //     group: ['list_id'],
+    let groupedTasks = await dbSql.query(`
+      SELECT l.id as id, l.name, COUNT(t.id) as undone
+      FROM (
+        SELECT *
+        FROM tasks
+        WHERE done = false
+      ) as t
+      RIGHT JOIN lists as l
+      ON t.list_id = l.id
+      GROUP BY l.id, l.name
+      ORDER BY l.id
+    `);
 
-    //   }
-    // );
-
-    let groupedTasks = Task.findAll(
-      {
-        include: 'list'
-      }
-    );
-
-    return groupedTasks;
+    const result = Object.assign(todayTasks.rows[0], {'lists': groupedTasks.rows});
+    return result;
   },
 
   async findToday() {
-    let todayTasks = await knex('tasks')
-    .select(knex.raw('tasks.id as id, tasks.name as name, description, done, due_date, lists.name as list_name, lists.id as list_id'))
-    .rightOuterJoin('lists', function() {
-      this.on('lists.id', '=', 'tasks.list_id')
-    })
+    console.log('shit', sequelize.models.lists);
+    let todayTasks = await Task.findAll({
+      attributes: ['id', 'name', 'description', 'done', 'due_date'],
+      where: {
+        due_date: {
+          [Op.eq]: sequelize.literal('CURRENT_DATE')
+        }
+      },
+      include: sequelize.models.lists
+    });
 
     return todayTasks
   },
 
   async create(task) {
-    let newTask = await dbSql.query(`
-      INSERT INTO tasks (name, description, done, due_date, list_id) 
-      VALUES ($1, $2, $3, $4, $5) 
-      RETURNING *
-    `, 
-    [task.name, task.description, false, task.due_date, task.list_id]);
-    return newTask.rows;
+    if (task.id) delete task.id
+    
+    let newTask = await Task.create(task)
+    return newTask;
   },
 
   async replace(taskId, task) {
@@ -108,9 +84,15 @@ module.exports = {
   },
 
   async update(taskId, newValues) {
-    const task = (await dbSql.query(`SELECT * FROM tasks WHERE id=$1`, [taskId])).rows[0];
-    Object.assign(task, newValues);
-    return this.replace(taskId, task)
+    if (newValues.id) delete newValues.id 
+
+    await Task.update(newValues, {
+      where: {
+        id: taskId
+      }
+    })
+
+    return await Task.findByPk(taskId);
   },
 
   async delete(taskId) {
