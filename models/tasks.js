@@ -11,21 +11,16 @@ module.exports = {
   },
 
   async findByListId(listId, all) {
-    let tasks;
+    let tasks = knex('tasks')
+    .select('name', 'description', 'done', 'due_date')
+    .where('list_id', listId);
     
     if (all) {
-      tasks = await knex('tasks')
-      .select('name', 'description', 'done', 'due_date')
-      .where('list_id', listId)
+      return await tasks;
     }
     else {
-      tasks = await knex('tasks')
-      .select('name', 'description', 'done', 'due_date')
-      .where('list_id', listId)
-      .andWhere('done', false)
+      return await tasks.andWhere('done', false);
     }
-
-    return tasks;
   },
 
   async findOneById(taskId) {
