@@ -17,8 +17,8 @@ http DELETE localhost:3000/tasks/10
 — DATA AGREGATION
 http localhost:3000/dashboard
 http localhost:3000/collection/today
-http localhost:3000/lists/1/tasks
-http localhost:3000/lists/1/tasks?all=true
+http localhost:3000/lists/3/tasks
+http localhost:3000/lists/3/tasks?all=true
 
 ---- SQL COMMANDS ----
 
