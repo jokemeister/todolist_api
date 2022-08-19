@@ -15,6 +15,7 @@ module.exports = {
     .select('name', 'description', 'done', 'due_date')
     .where('list_id', listId);
     
+    // all ? return await tasks : return await tasks.andWhere('done', false);
     if (all) {
       return await tasks;
     }
