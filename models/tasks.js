@@ -14,14 +14,9 @@ module.exports = {
     let tasks = knex('tasks')
     .select('name', 'description', 'done', 'due_date')
     .where('list_id', listId);
-    
-    // all ? return await tasks : return await tasks.andWhere('done', false);
-    if (all) {
-      return await tasks;
-    }
-    else {
-      return await tasks.andWhere('done', false);
-    }
+
+    let result = all ? await tasks : await tasks.andWhere('done', false);
+    return result;
   },
 
   async findOneById(taskId) {
