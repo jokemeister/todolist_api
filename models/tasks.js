@@ -1,5 +1,10 @@
 const knex = require('../db_knex');
 const dbSql = require('../db_sql');
+const types = require('pg').types;
+
+types.setTypeParser(20, function(val) {
+  return parseInt(val, 10)
+})
 
 module.exports = {
   async findAll() {
@@ -25,20 +30,20 @@ module.exports = {
   },
 
   async findDashboard() {
-    let todayTasksCount = await knex('tasks')
+    let todayTasksCount =
+      await knex('tasks')
       .count({today: 'done'})
       .whereRaw("due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
 
     let groupedTasks = await knex
       .select('l.id as id', 'l.name')
       .count({undone: 'done'})
-      .from(function() {
-        this.select('*')
-        .from('tasks')
-        .where('done', '=', false)
-        .as('t')
+      .from('tasks')
+      .rightOuterJoin('lists as l', function() {
+        this
+          .on('tasks.list_id', '=', 'l.id')
+          .on('tasks.done', '=', knex.raw('?', [false]))
       })
-      .rightJoin('lists as l', 't.list_id', 'l.id' )
       .groupBy('l.id', 'l.name')
       .orderBy('l.id')
 
