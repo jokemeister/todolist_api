@@ -25,20 +25,17 @@ module.exports = {
 
   async findDashboard() {
     let todayTasks = await db.query(`
-      SELECT COUNT(*) as today 
+      SELECT COUNT(*)::int as today 
       FROM tasks 
       WHERE due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'
     `);
 
     let groupedTasks = await db.query(`
-      SELECT l.id as id, l.name, COUNT(t.id) as undone
-      FROM (
-        SELECT *
-        FROM tasks
-        WHERE done=false
-      ) as t
+      SELECT l.id as id, l.name, COUNT(tasks.id)::int as undone
+      FROM tasks
       RIGHT JOIN lists as l
-      ON t.list_id=l.id
+      ON tasks.list_id=l.id
+      AND done=false
       GROUP BY l.id, l.name
       ORDER BY l.id
     `);
