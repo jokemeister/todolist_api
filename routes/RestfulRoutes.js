@@ -44,6 +44,9 @@ function RestfulRoutes(router, controller, model) {
         })
 
         router.patch('/:id', middleware, async function (req, res) {
+            console.log('====================================');
+            console.log(req.params.id, req.body);
+            console.log('====================================');
             let oneModel = await controller.updateById(req.params.id, req.body);
             if (!oneModel) res.status(404).json({ error: `${model} was not found` })
             else res.json(oneModel)
