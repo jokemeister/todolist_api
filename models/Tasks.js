@@ -14,7 +14,7 @@ module.exports = {
 
   async findByListId(listId, all) {
     let tasks = await dbSql.query(`
-      SELECT name, description, done, due_date 
+      SELECT id, name, description, done, due_date 
       FROM tasks
       WHERE list_id = $1 AND (done=false OR done=$2)
     `, [listId, all]);

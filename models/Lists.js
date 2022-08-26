@@ -16,11 +16,11 @@ module.exports = {
 
   async create(list) {
     let newlist = await dbSql.query(`
-      INSERT INTO lists (id, name) 
-      VALUES ($1, $2) 
+      INSERT INTO lists (name) 
+      VALUES ($1) 
       RETURNING *
     `, 
-    [list.id, list.name]);
+    [list.name]);
     return newlist.rows;
   },
 
@@ -35,7 +35,7 @@ module.exports = {
   },
 
   async delete(listId) {
-    const list = await dbSql.query(`DELETE FROM lists WHERE id=$1 RETURNING *`, [listId]);
+    const list = await dbSql.query(`DELETE FROM lists WHERE id=$1 RETURNING * CASCADE`, [listId]);
     return list.rows;
   },
 }

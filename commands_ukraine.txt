@@ -1,0 +1,50 @@
+---- TaskList SQL Requests ----
+— GET ALL
+http localhost:3000/tasks
+— GET ONE TASK
+http localhost:3000/tasks/1
+— CREATE THE TASK
+http POST localhost:3000/tasks name='Make all things doing right' description='You should do your best to make it right' due_date='2020-10-10' list_id=2
+— UPDATE THE TASK
+http PATCH localhost:3000/tasks/11 done:=true
+http PATCH localhost:3000/tasks/10 name='Make something else'
+— EXCHANGE THE TASK
+http PUT localhost:3000/tasks/11 name='Go okay'
+http PUT localhost:3000/tasks/10 name='Make something else' done:=true due_date='2022-08-10'
+— DELETE THE TASK
+http DELETE localhost:3000/tasks/10
+
+— DATA AGREGATION
+http localhost:3000/dashboard
+http localhost:3000/collection/today
+http localhost:3000/lists/3/tasks
+http localhost:3000/lists/3/tasks?all=true
+
+---- SQL COMMANDS ----
+
+--- LISTS ---
+create table lists(id serial PRIMARY KEY, name varchar);
+
+INSERT INTO lists(name)
+VALUES
+('Без списку'),
+('Завдання на життя'),
+('Завдання InCamp'),
+('Домашні справи');
+
+--- TASKS ---
+create table tasks(id serial PRIMARY KEY, name varchar, description varchar, done bool, due_date date, list_id int REFERENCES lists(id) ON DELETE CASCADE);
+
+INSERT INTO tasks(name, description, done, due_date, list_id)
+VALUES
+('Закінчити школу', 'Перестати витрачати час на здобуття непотрібних знань', true, '2020-08-01', 2),
+('Посадити дерево', 'Спочатку купи дім, а потім вже сади дерево', false, '2032-08-01', 2),
+('Заробити мільйон доларів', 'Для цього потрібно набути гарних навичок', false, '2032-01-01', 2),
+('Сходити на обід', 'Їж більше, аби була енергія на роботу', true, '2032-01-01', 3),
+('Створити дешбоард', 'Інакше не отримаєш роботу', false, CURRENT_DATE, 3),
+('Створити колекцію', 'Інакше будеш соромитись перед Олександром', false, CURRENT_DATE, 3),
+('Зробити домашку з агрегації даних', 'Інакше завалиш інтернатуру', false, CURRENT_DATE, 3),
+('Застелити ліжко', 'Інакше будеш шукати новий дім', true, CURRENT_DATE, 4),
+('Зробити прання', 'Інакше одяг буде смердіти', false, CURRENT_DATE, 4),
+('Помити посуд', 'Інакше будуть таракани', false, CURRENT_DATE, 4),
+('Нагодувати собак', 'Інакше вони тебе проглотять', false, CURRENT_DATE, 4);
