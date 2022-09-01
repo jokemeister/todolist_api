@@ -8,6 +8,7 @@ module.exports = {
     let tasks = await dbSql.query(`
       SELECT * 
       FROM tasks
+      ORDER BY id
     `);
     return tasks.rows;
   },
