@@ -18,6 +18,7 @@ module.exports = {
       SELECT id, name, description, done, due_date 
       FROM tasks
       WHERE list_id = $1 AND (done=false OR done=$2)
+      ORDER BY id
     `, [listId, all]);
     return tasks.rows;
   },
@@ -59,6 +60,7 @@ module.exports = {
           [Op.between]: [sequelize.literal('CURRENT_DATE'), sequelize.literal("CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")]
         }
       },
+      order: [['id', 'ASC']],
       include: sequelize.models.lists
     });
 
