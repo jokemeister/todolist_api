@@ -57,7 +57,7 @@ module.exports = {
       attributes: ['id', 'name', 'description', 'done', 'due_date'],
       where: {
         due_date: {
-          [Op.between]: [sequelize.literal('CURRENT_DATE'), sequelize.literal("CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")]
+          [Op.lte]: sequelize.literal("CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
         }
       },
       order: [['id', 'ASC']],
