@@ -58,7 +58,8 @@ module.exports = {
       where: {
         due_date: {
           [Op.lte]: sequelize.literal("CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'")
-        }
+        },
+        done: false
       },
       order: [['id', 'ASC']],
       include: sequelize.models.lists
