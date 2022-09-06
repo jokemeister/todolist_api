@@ -15,7 +15,7 @@ module.exports = {
 
   async findByListId(listId, all) {
     let tasks = await dbSql.query(`
-      SELECT id, name, description, done, due_date 
+      SELECT id, name, description, done, due_date, list_id 
       FROM tasks
       WHERE list_id = $1 AND (done=false OR done=$2)
       ORDER BY id
@@ -32,7 +32,7 @@ module.exports = {
     let todayTasks = await dbSql.query(`
       SELECT COUNT(*) as today
       FROM tasks
-      WHERE due_date BETWEEN CURRENT_DATE AND CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'
+      WHERE due_date < CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'
     `);
 
     let groupedTasks = await dbSql.query(`
