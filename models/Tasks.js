@@ -32,7 +32,7 @@ module.exports = {
     let todayTasks = await dbSql.query(`
       SELECT COUNT(*) as today
       FROM tasks
-      WHERE due_date < CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59'
+      WHERE due_date < CURRENT_DATE::TIMESTAMP + INTERVAL '23:59:59' AND done=false
     `);
 
     let groupedTasks = await dbSql.query(`
