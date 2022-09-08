@@ -35,7 +35,7 @@ module.exports = {
   },
 
   async delete(listId) {
-    const list = await dbSql.query(`DELETE FROM lists WHERE id=$1 RETURNING * CASCADE`, [listId]);
+    const list = await dbSql.query(`DELETE FROM lists WHERE id=$1 RETURNING *`, [listId]);
     return list.rows;
   },
 }
